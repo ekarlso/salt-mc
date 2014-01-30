@@ -18,12 +18,18 @@ from cliff.lister import Lister
 from saltmc.cli import BaseCommand
 from saltmc import utils
 
+import sys
+
 
 class Status(BaseCommand, Lister):
     """
     Shows currently installed versions
     """
-    def execute(self, parsed_args):
+    def get_parser(self, prog_name):
+        parser = super(Status, self).get_parser(prog_name)
+        return parser
+
+    def take_action(self, parsed_args):
         settings = self.get_settings(parsed_args)
 
         # Cached formulas aka downloaded
@@ -33,19 +39,28 @@ class Status(BaseCommand, Lister):
         formula_dirs = utils.get_installed_formulas(
             settings['directory'])
 
+        exit = 0
         data = []
         for formula_name in settings.get('formulas', {}):
             cache_dir = cache_items.get(formula_name)
             formula_dir = formula_dirs.get(formula_name)
 
-            if cache_dir and formula_dir:
-                comparison = utils.compare_directory(
-                    cache_dir + '/' + formula_name, formula_dir)
+            comparison = utils.compare_directory(
+                cache_dir + '/' + formula_name, formula_dir)
+
+            status = utils.is_identical(comparison)
+            if not status:
+                exit = 1
 
             data.append([
                 formula_name,
                 cache_items.get(formula_name),
                 formula_dirs.get(formula_name),
-                utils.is_identical(comparison)])
+                status])
 
-        return ('Name', 'Cached', 'Present', 'Up to Date'), data
+        self.produce_output(
+            parsed_args,
+            ('Name', 'Cached', 'Present', 'Up to Date'),
+            data)
+
+        sys.exit(exit)

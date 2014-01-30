@@ -37,6 +37,8 @@ def read_json(path):
 
 
 def is_identical(c):
+    if c is None or c.right is None:
+        return False
     if c.left_only or c.right_only or c.diff_files:
         return False
     else:
