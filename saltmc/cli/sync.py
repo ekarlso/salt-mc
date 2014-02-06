@@ -18,8 +18,7 @@ import shutil
 import os
 
 from saltmc.cli import BaseCommand
-from saltmc import link
-from saltmc import fetchers
+from saltmc import sync
 from saltmc import utils
 
 
@@ -33,14 +32,13 @@ class Sync(BaseCommand):
     """
     def take_action(self, parsed_args):
         settings = self.get_settings(parsed_args)
-        for name, data in settings.get('formulas', {}).items():
-            l = link.Link(data)
 
-            fetcher = fetchers.get_by_scheme(l.scheme)(l.url)
+        formulas = settings.get('formulas', {})
+
+        sync.fetch_all(formulas, self.app_args.cache_dir)
+
+        for name, data in formulas.items():
             source_top = os.path.join(self.app_args.cache_dir, name)
-            # This should download / clone or whatever and unpack if a file
-            # to the source_top directory within the cache directory
-            fetcher.fetch(source_top)
 
             formula_dirs = utils.get_installed_formulas(
                 settings['directory'])

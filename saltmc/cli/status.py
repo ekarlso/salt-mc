@@ -16,6 +16,7 @@
 from cliff.lister import Lister
 
 from saltmc.cli import BaseCommand
+from saltmc import sync
 from saltmc import utils
 
 import sys
@@ -25,12 +26,12 @@ class Status(BaseCommand, Lister):
     """
     Shows currently installed versions
     """
-    def get_parser(self, prog_name):
-        parser = super(Status, self).get_parser(prog_name)
-        return parser
-
     def take_action(self, parsed_args):
         settings = self.get_settings(parsed_args)
+
+        formulas = settings.get('formulas', {})
+
+        sync.fetch_all(formulas, self.app_args.cache_dir)
 
         # Cached formulas aka downloaded
         cache_items = utils.get_cache_items(self.app_args.cache_dir)
